@@ -84,7 +84,7 @@ contract Shopfront
         returns(bool)
     {
         require (isProduct(_productId));
-        require (products[_productId].productStock < quantity);
+        require (products[_productId].productStock > quantity);
         uint totalPrice = (products[_productId].productPrice * quantity);
         require (totalPrice <= msg.value);
         uint remaining = totalPrice - msg.value;
