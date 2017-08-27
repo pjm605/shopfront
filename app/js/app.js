@@ -28,5 +28,29 @@ app.config(function ($locationProvider) {
 
 app.controller("ShopfrontCtrl", [ '$scope', '$location', '$http', '$q', '$window', '$timeout', 
   function ($scope, $location, $http, $q, $window, $timeout) {
+  	$scope.products = [];
+  	console.log("hello")
+  	Shopfront.deployed()
+  	.then(function (_instance) {
+  		$scope.contract = _instance;
+  		console.log("The contract: ", $scope.contract);
 
+  		$scope.productAddedWatch = $scope.contract.LogNewProduct({}, {fromBlock: 0})
+  		.watch(function (err, newProduct) {
+	  		if (err) {
+	  			console.log("Error watching new product events", err);
+	  		} else {
+	  			console.log("New Product ", newProduct);
+	  			newProduct.args.productPrice = newProduct.args.productPrice.toString(10);
+	  			$scope.products.push(newProduct);
+	  			$scope.$apply(); 
+	  		}
+  		})
+
+  		$scope.$apply(); 
+  	})
+
+  	
+
+  	//$scope.$apply();
 }])

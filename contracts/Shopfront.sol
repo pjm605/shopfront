@@ -28,11 +28,14 @@ contract Shopfront
     }
     
     mapping (address => uint) balances;
-    
-    
     mapping (uint => ProductStruct) private products;
     uint[] private productIndex;
-    
+
+    event LogNewProduct (uint indexed productId, uint index, string productName, uint productPrice, uint productStock);
+    event LogUpdateProductPrice (uint indexed productId, uint index, string productName, uint productPrice, uint productStock);
+    event LogBuyProduct (address buyer, uint productId, uint quantity);
+    event LogWithdrawn (address withdrawTo, uint amount);
+
     function registerAdministrator (address _administrator) 
         isOwner()
         public
@@ -68,15 +71,17 @@ contract Shopfront
         return productIndex.length - 1;
     }
     
-    function updateProductPrice (uint _productId, uint _productPrice)
+    function updateProductPrice (uint _productId, uint newProductPrice)
         public
         isAdministrator()
         returns(bool)
     {
         require(isProduct(_productId));
-        products[_productId].productPrice = _productPrice;
+        products[_productId].productPrice = newProductPrice;
+        LogUpdateProductPrice(_productId, products[_productId].index, products[_productId].productName, newProductPrice, products[_productId].productStock);
         return true;
     }
+
     
     function buyProduct (uint _productId, uint quantity) 
         public
@@ -95,6 +100,7 @@ contract Shopfront
             balances[msg.sender] += remaining;
         }
         
+        LogBuyProduct(msg.sender,  _productId,  quantity);
         return true;
             
     }
@@ -108,6 +114,8 @@ contract Shopfront
         uint amount = balances[msg.sender];
         balances[msg.sender] = 0;
         msg.sender.transfer(amount);
+        LogWithdrawn(msg.sender, amount);
+
         return true;
     }
     
