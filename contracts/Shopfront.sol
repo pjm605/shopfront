@@ -28,7 +28,7 @@ contract Shopfront
     }
     
     mapping (address => uint) balances;
-    mapping (uint => ProductStruct) private products;
+    mapping (uint => ProductStruct) public products;
     uint[] private productIndex;
 
     event LogNewProduct (uint indexed productId, uint index, string productName, uint productPrice, uint productStock);
@@ -104,6 +104,18 @@ contract Shopfront
         return true;
             
     }
+
+    // function getProduct (uint _productId)
+    //     constant
+    //     returns (string productName,  uint productPrice, uint productStock, uint index) 
+    // {
+    //     return (
+    //         products[_productId].productName,
+    //         products[_productId].productPrice,
+    //         products[_productId].productStock,
+    //         products[_productId].index
+    //     );
+    // }
     
     function withdrawBalance () 
         public
