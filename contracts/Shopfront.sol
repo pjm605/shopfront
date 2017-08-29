@@ -7,6 +7,8 @@ contract Shopfront
     
     function Shopfront() {
         owner = msg.sender;
+        //initially administrator is owner;
+        administrator = msg.sender;
     }
     
     modifier isOwner() {
@@ -20,20 +22,20 @@ contract Shopfront
     }
     
     struct ProductStruct {
-        uint    productId;
-        string  productName;
+        bytes32 productName;
         uint    productPrice;
         uint    productStock;
         uint    index;
     }
     
     mapping (address => uint) balances;
-    mapping (uint => ProductStruct) public products;
-    uint[] private productIndex;
+    mapping (bytes32 => ProductStruct) public products;
+    bytes32[] private productIndex;
 
-    event LogNewProduct (uint indexed productId, uint index, string productName, uint productPrice, uint productStock);
-    event LogUpdateProductPrice (uint indexed productId, uint index, string productName, uint productPrice, uint productStock);
-    event LogBuyProduct (address buyer, uint productId, uint quantity);
+    event LogNewProduct (bytes32 indexed productId, uint index, bytes32 productName, uint productPrice, uint productStock);
+    event LogDeleteProduct (bytes32 indexed productId, uint index);
+    event LogUpdateProduct (bytes32 indexed productId, uint index, bytes32 productName, uint productPrice, uint productStock);
+    event LogBuyProduct (address buyer, bytes32 productId, uint quantity);
     event LogWithdrawn (address withdrawTo, uint amount);
 
     function registerAdministrator (address _administrator) 
@@ -45,7 +47,7 @@ contract Shopfront
         return true;
     }
     
-    function isProduct (uint productId)
+    function isProduct (bytes32 productId)
         public
         constant
         returns (bool)
@@ -55,41 +57,63 @@ contract Shopfront
     }
     
 
-    function addProduct (uint _productId, string _productName, uint _productPrice, uint _productStock)
+    function addProduct (bytes32 _productId, bytes32 _productName, uint _productPrice, uint _productStock)
         isAdministrator()
         public
         returns (uint index)
     {
 
         require (!isProduct(_productId));
-        products[_productId].productId = _productId;
+
         products[_productId].productName = _productName;
         products[_productId].productPrice = _productPrice;
         products[_productId].productStock = _productStock;
         products[_productId].index = productIndex.push(_productId)-1;
+        LogNewProduct (_productId, products[_productId].index, _productName, _productPrice, _productStock);
         
         return productIndex.length - 1;
     }
-    
-    function updateProductPrice (uint _productId, uint newProductPrice)
-        public
+
+    function deleteProduct (bytes32 _productId) 
         isAdministrator()
-        returns(bool)
+        public
+        returns (uint index)
     {
-        require(isProduct(_productId));
-        products[_productId].productPrice = newProductPrice;
-        LogUpdateProductPrice(_productId, products[_productId].index, products[_productId].productName, newProductPrice, products[_productId].productStock);
-        return true;
+        require (isProduct(_productId));
+        uint targetProductIndex = products[_productId].index;
+        bytes32 keyToMove = productIndex[productIndex.length-1];
+        
+        productIndex[targetProductIndex] = keyToMove;
+        products[keyToMove].index = targetProductIndex;
+        productIndex.length--;
+        
+        LogDeleteProduct (_productId, targetProductIndex);
+        LogUpdateProduct (keyToMove, targetProductIndex, products[keyToMove].productName, products[keyToMove].productPrice, products[keyToMove].productStock);
+        
+        return targetProductIndex;
+
     }
+    
+    // function updateProductPrice (bytes32 _productId, uint newProductPrice)
+    //     public
+    //     isAdministrator()
+    //     returns(bool)
+    // {
+    //     require(isProduct(_productId));
+    //     products[_productId].productPrice = newProductPrice;
+    //     LogUpdateProductPrice(_productId, products[_productId].index, products[_productId].productName, products[_productId].productStock, products[_productId].productStock);
+    //     return true;
+    // }
 
     
-    function buyProduct (uint _productId, uint quantity) 
+    function buyProduct (bytes32 _productId, uint quantity) 
         public
         payable
         returns(bool)
     {
         require (isProduct(_productId));
         require (products[_productId].productStock > quantity);
+        
         uint totalPrice = (products[_productId].productPrice * quantity);
         require (totalPrice <= msg.value);
         uint remaining = totalPrice - msg.value;
@@ -100,22 +124,13 @@ contract Shopfront
             balances[msg.sender] += remaining;
         }
         
+        uint postSaleQuantity = (products[_productId].productStock - quantity);
+        products[_productId].productStock = postSaleQuantity;
+        
         LogBuyProduct(msg.sender,  _productId,  quantity);
+        LogUpdateProduct (_productId, products[_productId].index, products[_productId].productName,  products[_productId].productPrice,  products[_productId].productStock);
         return true;
-            
     }
-
-    // function getProduct (uint _productId)
-    //     constant
-    //     returns (string productName,  uint productPrice, uint productStock, uint index) 
-    // {
-    //     return (
-    //         products[_productId].productName,
-    //         products[_productId].productPrice,
-    //         products[_productId].productStock,
-    //         products[_productId].index
-    //     );
-    // }
     
     function withdrawBalance () 
         public

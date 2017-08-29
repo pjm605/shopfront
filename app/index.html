@@ -27,9 +27,58 @@
       <div class="row">
         <div class="col-md-12">
           <h3><span class="black">Shopfront</span> Page</h3>
-          <h4>{{ 1+1 }}</h4>
         </div>
       </div>
+
+      <div class="row">
+        <div class="col-md-12">
+          <h3>Add product</h3>
+          <form id="productAddForm" ng-submit="addProduct()">
+            Product Id: <input type="type" name="newProductId" ng-model="newProductId" required/>
+            Product Name: <input type="type" name="newProductName" ng-model="newProductName" required/>
+            Product Price: <input type="type" name="newProductPrice" ng-model="newProductPrice" required/>
+            Product Stock: <input type="type" name="newProductStock" ng-model="newProductStock" required/>
+            <input type="submit" class="btn btn-primary" value="submit" />
+          </form>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-12">
+          <h3>Delete product</h3>
+          <form id="productAddForm" ng-submit="deleteProduct(deleteProductId)">
+            Product Id: <input type="type" name="deleteProductId" ng-model="deleteProductId" required/>
+            <input type="submit" class="btn btn-primary" value="submit" />
+          </form>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="panel panel-default">
+          <div class="panel-body">
+              <table class="table table-striped table-bordered">
+                <h3>Product List</h3>
+                <tr>
+                  <th> Product ID</th>
+                  <th> Product Index</th>
+                  <th> Product Name</th>
+                  <th> Product Price</th>
+                  <th> Product Stock</th>
+    <!--               <th> Delete</th> -->
+                </tr>
+
+                <tr ng-repeat="product in products">
+                  <td>{{ product.args.productId }}</td>
+                  <td>{{ product.args.index }}</td>
+                  <td>{{ product.args.productName }}</td>
+                  <td>{{ product.args.productPrice }}</td>
+                  <td>{{ product.args.productStock }}</td>
+                 <!--  <td><button class="btn btn-blue " ng-click="deleteProduct(product.args.productId)">Delete</button> </td> -->
+              </table>
+            </div>
+          </div>
+      </div>
+
   </div>
 
 
