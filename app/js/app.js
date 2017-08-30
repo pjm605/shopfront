@@ -26,6 +26,16 @@ app.config(function ($locationProvider) {
     $locationProvider.html5Mode(false);
 });
 
+function hexToAscii (str) {
+  var hex = str.toString();
+  var result = '';
+  for (var i =2; i < str.length; i += 2) {
+    var code = String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+    result += code;
+  }
+
+  return result;
+}
 
 app.controller('ShopfrontCtrl', function ($scope) {
     $scope.products = [];
@@ -41,8 +51,10 @@ app.controller('ShopfrontCtrl', function ($scope) {
           console.log("Error watching new product events", err);
         } else {
           console.log("New Product ", newProduct);
+
+          var pNameToString = hexToAscii(newProduct.args.productName);
           newProduct.args.productId = newProduct.args.productId.toString(10);
-          // newProduct.args.productName = newProduct.args.productPrice.toString(10);
+          newProduct.args.productName = pNameToString;
           newProduct.args.productPrice = newProduct.args.productPrice.toString(10);
           $scope.products.push(newProduct);
           $scope.$apply(); 
@@ -59,21 +71,25 @@ app.controller('ShopfrontCtrl', function ($scope) {
           var updatedIndex = parseInt(updateProduct.args.index);
           
           updateProduct.args.productId = updatedProdcutId;
-          // newProduct.args.productName = newProduct.args.productPrice.toString(10);
+          updateProduct.args.productName = hexToAscii(updateProduct.args.productName);
           updateProduct.args.productPrice = updateProduct.args.productPrice.toString(10);
 
-          //update the product list
           $scope.products[updatedIndex] = updateProduct;
-
-          // if the update is the result of delete, then delete the last elem in products array
-          var lastElemProductId = $scope.products[$scope.products.length - 1].args.productId;
-          if ((lastElemProductId == updatedProdcutId) && (updatedIndex !== $scope.products.length -1)) {
-            $scope.products.splice($scope.products.length-1)
-          }
-
           $scope.$apply(); 
+
         }
       });
+
+      $scope.productDeleteWatch = $scope.contract.LogDeleteProduct({}, {fromBlock: 0})
+      .watch(function (err, deleteProduct) {
+        if (err) {
+          console.log("Error watching delete product events", err);
+        } else {
+          console.log("Delete Product", deleteProduct);
+          $scope.products.splice($scope.products.length - 1);
+          $scope.$apply(); 
+        }
+      })
 
       $scope.$apply(); 
     });
@@ -115,7 +131,15 @@ app.controller('ShopfrontCtrl', function ($scope) {
     }
 
     // $scope.buyProduct = function () {
-    //   $scope.contract.buyProduct(productId, quantity, {from: $scope.accounts[2]})
+    //   var productId = parseInt($scope.orderProductId);
+    //   var quantity  = parseInt($scope.orderProductQuantity);
+    //   var value = parseInt($scope.orderValue);
+
+    //   $scope.orderProductId       = "";
+    //   $scope.orderProductQuantity = "";
+    //   $scope.orderValue           = 0;
+
+    //   $scope.contract.buyProduct(productId, quantity, {from: $scope.accounts[2], value: value})
     //   .then(tx => {
     //     console.log(tx);
     //   })

@@ -29,13 +29,13 @@ contract Shopfront
     }
     
     mapping (address => uint) balances;
-    mapping (bytes32 => ProductStruct) public products;
-    bytes32[] private productIndex;
+    mapping (uint256 => ProductStruct) public products;
+    uint256[] private productIndex;
 
-    event LogNewProduct (bytes32 indexed productId, uint index, bytes32 productName, uint productPrice, uint productStock);
-    event LogDeleteProduct (bytes32 indexed productId, uint index);
-    event LogUpdateProduct (bytes32 indexed productId, uint index, bytes32 productName, uint productPrice, uint productStock);
-    event LogBuyProduct (address buyer, bytes32 productId, uint quantity);
+    event LogNewProduct (uint256 indexed productId, uint index, bytes32 productName, uint productPrice, uint productStock);
+    event LogDeleteProduct (uint256 indexed productId, uint index);
+    event LogUpdateProduct (uint256 indexed productId, uint index, bytes32 productName, uint productPrice, uint productStock);
+    event LogBuyProduct (address buyer, uint256 productId, uint quantity);
     event LogWithdrawn (address withdrawTo, uint amount);
 
     function registerAdministrator (address _administrator) 
@@ -47,7 +47,7 @@ contract Shopfront
         return true;
     }
     
-    function isProduct (bytes32 productId)
+    function isProduct (uint256 productId)
         public
         constant
         returns (bool)
@@ -57,7 +57,7 @@ contract Shopfront
     }
     
 
-    function addProduct (bytes32 _productId, bytes32 _productName, uint _productPrice, uint _productStock)
+    function addProduct (uint256 _productId, bytes32 _productName, uint _productPrice, uint _productStock)
         isAdministrator()
         public
         returns (uint index)
@@ -73,40 +73,40 @@ contract Shopfront
         
         return productIndex.length - 1;
     }
-
-    function deleteProduct (bytes32 _productId) 
+    
+    function deleteProduct (uint256 _productId) 
         isAdministrator()
         public
         returns (uint index)
     {
         require (isProduct(_productId));
         uint targetProductIndex = products[_productId].index;
-        bytes32 keyToMove = productIndex[productIndex.length-1];
+        uint256 keyToMove = productIndex[productIndex.length-1];
         
         productIndex[targetProductIndex] = keyToMove;
         products[keyToMove].index = targetProductIndex;
         productIndex.length--;
         
-        LogDeleteProduct (_productId, targetProductIndex);
         LogUpdateProduct (keyToMove, targetProductIndex, products[keyToMove].productName, products[keyToMove].productPrice, products[keyToMove].productStock);
-        
+        LogDeleteProduct (_productId, targetProductIndex);
+
         return targetProductIndex;
 
     }
     
-    // function updateProductPrice (bytes32 _productId, uint newProductPrice)
+    // function updateProduct (bytes32 _productId, uint newProductPrice)
     //     public
     //     isAdministrator()
     //     returns(bool)
     // {
     //     require(isProduct(_productId));
     //     products[_productId].productPrice = newProductPrice;
-    //     LogUpdateProductPrice(_productId, products[_productId].index, products[_productId].productName, products[_productId].productStock, products[_productId].productStock);
+    //     LogUpdateProduct(_productId, products[_productId].index, products[_productId].productName, newProductPrice, products[_productId].productStock);
     //     return true;
     // }
 
     
-    function buyProduct (bytes32 _productId, uint quantity) 
+    function buyProduct (uint256 _productId, uint quantity) 
         public
         payable
         returns(bool)
@@ -130,6 +130,14 @@ contract Shopfront
         LogBuyProduct(msg.sender,  _productId,  quantity);
         LogUpdateProduct (_productId, products[_productId].index, products[_productId].productName,  products[_productId].productPrice,  products[_productId].productStock);
         return true;
+    }
+    
+    function getProductCount () 
+        public
+        constant
+        returns (uint count)
+    {
+        return productIndex.length;
     }
     
     function withdrawBalance () 

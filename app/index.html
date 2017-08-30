@@ -56,32 +56,67 @@
       <div class="row">
         <div class="panel panel-default">
           <div class="panel-body">
-              <table class="table table-striped table-bordered">
-                <h3>Product List</h3>
-                <tr>
-                  <th> Product ID</th>
-                  <th> Product Index</th>
-                  <th> Product Name</th>
-                  <th> Product Price</th>
-                  <th> Product Stock</th>
-    <!--               <th> Delete</th> -->
-                </tr>
+            <table class="table table-striped table-bordered">
+              <h3>Product List</h3>
+              <tr>
+                <th> Product ID</th>
+                <th> Product Index</th>
+                <th> Product Name</th>
+                <th> Product Price</th>
+                <th> Product Stock</th>
+              </tr>
 
-                <tr ng-repeat="product in products">
-                  <td>{{ product.args.productId }}</td>
-                  <td>{{ product.args.index }}</td>
-                  <td>{{ product.args.productName }}</td>
-                  <td>{{ product.args.productPrice }}</td>
-                  <td>{{ product.args.productStock }}</td>
-                 <!--  <td><button class="btn btn-blue " ng-click="deleteProduct(product.args.productId)">Delete</button> </td> -->
-              </table>
-            </div>
+              <tr ng-repeat="product in products">
+                <td>{{ product.args.productId }}</td>
+                <td>{{ product.args.index }}</td>
+                <td>{{ product.args.productName }}</td>
+                <td>{{ product.args.productPrice }}</td>
+                <td>{{ product.args.productStock }}</td>
+            </table>
           </div>
+        </div>
       </div>
 
   </div>
 
+<!--   <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-12">
+        <div class="panel panel-default">
+          <div class="panel-body">
+              <table class="table table-striped table-bordered">
+                <h3>Product List</h3>
+                <tr>
+                  <th> Product ID</th>
+                  <th> Product Name</th>
+                  <th> Product Price</th>
+                  <th> Product Stock</th>
+                </tr>
 
+                <tr ng-repeat="product in products">
+                  <td>{{ product.args.productId }}</td>
+                  <td>{{ product.args.productName }}</td>
+                  <td>{{ product.args.productPrice }}</td>
+                  <td>{{ product.args.productStock }}</td>
+              </table>
+            </div>
+          </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-12">
+          <h3>Add product</h3>
+          <form id="buyProductForm" ng-submit="buyProduct()">
+            Product Id: <input type="type" name="orderProductId" ng-model="orderProductId" required/>
+            Product Stock: <input type="type" name="orderProductQuantity" ng-model="orderProductQuantity" required/>
+            Value: <input type="type" name="orderValue" ng-model="orderValue" required/>
+            <input type="submit" class="btn btn-primary" value="submit" />
+          </form>
+      </div>
+    </div>
+  </div>
+ -->
   <script>
   	window.addEventListener('load', function () {
   		angular.bootstrap(document, ['app']);
