@@ -86,7 +86,11 @@ app.controller('ShopfrontCtrl', function ($scope) {
           console.log("Error watching delete product events", err);
         } else {
           console.log("Delete Product", deleteProduct);
-          $scope.products.splice($scope.products.length - 1);
+          if ($scope.products.length == 1) {
+            $scope.products = [];
+          } else {
+            $scope.products.splice($scope.products.length - 1);
+          }
           $scope.$apply(); 
         }
       })
