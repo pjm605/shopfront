@@ -2,6 +2,7 @@ pragma solidity ^0.4.6;
 
 import "./Admin.sol";
 import "./CoBuying.sol";
+import "./ShopfrontToken.sol";
 
 contract Shopfront is Admin
 {
@@ -12,6 +13,7 @@ contract Shopfront is Admin
         bytes32 productName;
         uint    productPrice;
         uint    productStock;
+        uint    productPriceInTokens;
         uint    index;
     }
 
@@ -49,7 +51,7 @@ contract Shopfront is Admin
     }
     
 
-    function addProduct (uint256 _productId, bytes32 _productName, uint _productPrice, uint _productStock)
+    function addProduct (uint256 _productId, bytes32 _productName, uint _productPrice, uint _productStock, uint _productPriceInTokens)
         isAdministrator
         public
         returns (uint index)
@@ -60,6 +62,7 @@ contract Shopfront is Admin
         products[_productId].productName = _productName;
         products[_productId].productPrice = _productPrice;
         products[_productId].productStock = _productStock;
+        products[_productId].productPriceInTokens = _productPriceInTokens;
         products[_productId].index = productIndex.push(_productId)-1;
         LogNewProduct (_productId, products[_productId].index, _productName, _productPrice, _productStock);
         
@@ -105,6 +108,29 @@ contract Shopfront is Admin
             balances[msg.sender] += remaining;
         }
         
+        uint postSaleQuantity = (products[_productId].productStock - quantity);
+        products[_productId].productStock = postSaleQuantity;
+        
+        LogBuyProduct(msg.sender,  _productId,  quantity);
+        LogUpdateProduct (_productId, products[_productId].index, products[_productId].productName,  products[_productId].productPrice,  products[_productId].productStock);
+        return true;
+    }
+    
+    function buyProductWithToken (uint256 _productId, uint quantity, address tokenAddress) 
+        public
+        payable
+        hasEnoughStock(_productId, quantity)
+        returns(bool)
+    {
+        require (isProduct(_productId));
+        
+        ShopfrontToken token = ShopfrontToken(tokenAddress);
+        
+        uint totalPriceInTokens = (products[_productId].productPriceInTokens * quantity);
+        require(totalPriceInTokens <= token.tokenAllowance(owner, msg.sender));
+        
+        token.tokenTransferFrom(msg.sender, owner, totalPriceInTokens);
+
         uint postSaleQuantity = (products[_productId].productStock - quantity);
         products[_productId].productStock = postSaleQuantity;
         
