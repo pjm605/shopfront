@@ -4,6 +4,7 @@ const Web3            = require("web3");
 const Promise         = require("bluebird");
 const truffleContract = require("truffle-contract");
 const shopfrontJson   = require("../../build/contracts/Shopfront.json");
+const coBuyingJson   = require("../../build/contracts/CoBuying.json");
 
 if (typeof web3 !== 'undefined') {
     // Use the Mist/wallet/Metamask provider.
@@ -16,10 +17,14 @@ if (typeof web3 !== 'undefined') {
 Promise.promisifyAll(web3.eth, { suffix: "Promise" });
 Promise.promisifyAll(web3.version, { suffix: "Promise" });
 
-
 const Shopfront = truffleContract(shopfrontJson);
 Shopfront.setProvider(web3.currentProvider);
 
+const CoBuying = truffleContract(coBuyingJson);
+CoBuying.setProvider(web3.currentProvider);
+
+
+/////////////////////////////////////////////////////////
 var app = angular.module('app', []);
 
 app.config(function ($locationProvider) {
@@ -37,15 +42,17 @@ function hexToAscii (str) {
   return result;
 }
 
-app.controller('ShopfrontCtrl', function ($scope) {
-    $scope.products = [];
+app.run(['$rootScope', function ($rootScope) {
+    $rootScope.products = [];
+    $rootScope.purchase = [];
+    $rootScope.coBuyings = [];
 
     Shopfront.deployed()
     .then(function (_instance) {
-      $scope.contract = _instance;
-      console.log("The contract: ", $scope.contract);
+      $rootScope.contract = _instance;
+      console.log("The contract: ", $rootScope.contract);
 
-      $scope.productAddedWatch = $scope.contract.LogNewProduct({}, {fromBlock: 0})
+      $rootScope.productAddedWatch = $rootScope.contract.LogNewProduct({}, {fromBlock: 0})
       .watch(function (err, newProduct) {
         if (err) {
           console.log("Error watching new product events", err);
@@ -56,12 +63,12 @@ app.controller('ShopfrontCtrl', function ($scope) {
           newProduct.args.productId = newProduct.args.productId.toString(10);
           newProduct.args.productName = pNameToString;
           newProduct.args.productPrice = newProduct.args.productPrice.toString(10);
-          $scope.products.push(newProduct);
-          $scope.$apply(); 
+          $rootScope.products.push(newProduct);
+          $rootScope.$apply(); 
         }
       });
 
-      $scope.productUpdateWatch = $scope.contract.LogUpdateProduct({}, {fromBlock: 0})
+      $rootScope.productUpdateWatch = $rootScope.contract.LogUpdateProduct({}, {fromBlock: 0})
       .watch(function (err, updateProduct) {
         if (err) {
           console.log("Error watching update product events", err);
@@ -74,85 +81,50 @@ app.controller('ShopfrontCtrl', function ($scope) {
           updateProduct.args.productName = hexToAscii(updateProduct.args.productName);
           updateProduct.args.productPrice = updateProduct.args.productPrice.toString(10);
 
-          $scope.products[updatedIndex] = updateProduct;
-          $scope.$apply(); 
+          $rootScope.products[updatedIndex] = updateProduct;
+          $rootScope.$apply(); 
 
         }
       });
 
-      $scope.productDeleteWatch = $scope.contract.LogDeleteProduct({}, {fromBlock: 0})
+      $rootScope.productDeleteWatch = $rootScope.contract.LogDeleteProduct({}, {fromBlock: 0})
       .watch(function (err, deleteProduct) {
         if (err) {
           console.log("Error watching delete product events", err);
         } else {
           console.log("Delete Product", deleteProduct);
-          if ($scope.products.length == 1) {
-            $scope.products = [];
+          if ($rootScope.products.length == 1) {
+            $rootScope.products = [];
           } else {
-            $scope.products.splice($scope.products.length - 1);
+            $rootScope.products.splice($rootScope.products.length - 1);
           }
-          $scope.$apply(); 
+          $rootScope.$apply(); 
         }
       })
 
-      $scope.$apply(); 
+      $rootScope.productPurchaseWatch = $rootScope.contract.LogBuyProduct({}, {fromBlock: 0})
+      .watch(function (err, purchasedProduct) {
+        if (err) {
+          console.log("Error watching purchase product events", err);
+        } else {
+          console.log("purchase Product", purchasedProduct);
+
+          purchasedProduct.args.productId = purchasedProduct.args.productId.toString(10);
+          purchasedProduct.args.quantity = purchasedProduct.args.quantity.toString(10);
+          $rootScope.purchase.push(purchasedProduct);
+          $rootScope.$apply(); 
+        }
+      })
+
+      $rootScope.$apply(); 
     });
+    
+    // $rootScope.setAccount = function () {
+    //   $rootScope.account = $scope.accountSelected;
+    //   $rootScope.balance = web3.eth.getBalance($scope.account).toString(10);
 
-
-    $scope.addProduct = function () {
-      var productId     = parseInt($scope.newProductId);
-      var productName   = $scope.newProductName;
-      var productPrice  = parseInt($scope.newProductPrice);
-      var productStock  = parseInt($scope.newProductStock);
-
-      $scope.newProductId     = "";
-      $scope.newProductName   = "";
-      $scope.newProductPrice  = 0;
-      $scope.newProductStock  = 0;
-
-      //if ()
-
-      $scope.contract.addProduct (productId, productName, productPrice, productStock, { from: $scope.administrator, gas: 900000})
-      .then(tx => {
-        console.log(tx);
-      })
-      .catch(err => {
-        console.log("Error processing addProduct, ", err);
-      })
-
-    };
-
-    $scope.deleteProduct = function (productId) {
-      $scope.deleteProductId = "";
-
-      $scope.contract.deleteProduct (productId, { from: $scope.administrator, gas: 900000})
-      .then(tx => {
-        console.log(tx);
-      })
-      .catch(err => {
-        console.log("Error processing addProduct, ", err);
-      })
-    }
-
-    // $scope.buyProduct = function () {
-    //   var productId = parseInt($scope.orderProductId);
-    //   var quantity  = parseInt($scope.orderProductQuantity);
-    //   var value = parseInt($scope.orderValue);
-
-    //   $scope.orderProductId       = "";
-    //   $scope.orderProductQuantity = "";
-    //   $scope.orderValue           = 0;
-
-    //   $scope.contract.buyProduct(productId, quantity, {from: $scope.accounts[2], value: value})
-    //   .then(tx => {
-    //     console.log(tx);
-    //   })
-    //   .catch(err => {
-    //     console.log("Error processing deleteProduct, ", err);
-    //   })
+    //   console.log('Using account',$scope.account);
     // }
-
-
 
     web3.eth.getAccounts(function (err, accs) {
       if (err != null) {
@@ -165,10 +137,17 @@ app.controller('ShopfrontCtrl', function ($scope) {
         return;
       }
 
-      $scope.accounts = accs;
-      $scope.owner = $scope.accounts[0];
-      $scope.administrator = $scope.accounts[0];
-      $scope.$apply();
+      $rootScope.accounts = accs;
+      $rootScope.owner = $rootScope.accounts[0];
+      $rootScope.administrator = $rootScope.accounts[0];
+      // $rootScope.account = $rootScope.accounts[0];
+      // $rootScope.balance = web3.eth.getBalance($rootScope.account).toString(10);
+      $rootScope.$apply();
     })
 
-});
+}])
+
+app.controller('AdminCtrl', require('./controllers/AdminCtrl.js'));
+app.controller('BuyCtrl', require('./controllers/BuyCtrl.js'));
+
+
