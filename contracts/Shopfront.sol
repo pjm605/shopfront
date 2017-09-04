@@ -28,6 +28,7 @@ contract Shopfront is Admin
     event LogNewCoBuying (address newCoBuyingAddr, address creator, uint coBuyingDuration, uint256 productId, uint quantity);
 
     event LogBuyProduct (address buyer, uint256 productId, uint quantity);
+    event LogBuyProductWithToken (address buyer, uint256 productId, uint quantity);
     event LogWithdrawn (address withdrawTo, uint amount);
     
     modifier hasEnoughStock (uint256 _productId, uint _quantity) {
@@ -134,7 +135,7 @@ contract Shopfront is Admin
         uint postSaleQuantity = (products[_productId].productStock - quantity);
         products[_productId].productStock = postSaleQuantity;
         
-        LogBuyProduct(msg.sender,  _productId,  quantity);
+        LogBuyProductWithToken(msg.sender,  _productId,  quantity);
         LogUpdateProduct (_productId, products[_productId].index, products[_productId].productName,  products[_productId].productPrice,  products[_productId].productStock);
         return true;
     }
